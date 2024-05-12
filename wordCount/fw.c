@@ -1,5 +1,6 @@
 /*******************************************************************************************************************
- * Description: 
+ * Description: Function counts the number of occurences of all words in given text files
+ * Then prints out top occuring words. 
  *
  *
  * Author: Vincent Pierce
@@ -8,10 +9,6 @@
  * ***************************************************************************************************************
  *
  * FILE INCLUDSION **********************************************************************************************/
-
-//include <stdint.h>
-//include <stdlib.h>
-//#include <ctype.h>
 #include "fw.h"
 #include "hash.h"
 /* LOCAL DEFINITIONS *******************************************************************************************/
@@ -30,46 +27,87 @@ int main(int argc, char* argv[])
 				k = *optarg-'0';
 				break;
 			case '?':
-				printf(stderr," Usage: %s [-o arg]\n, argv[0]");
+				printf(" Usage: %s [-o arg]\n", argv[0]);
 				return -1;	// End program
 			case ':':
-				printf(stderr," Usage: %s [-o arg]\n, argv[0]");
+				printf(" Usage: %s [-o arg]\n", argv[0]);
 				return -1;
 			default:
 				printf("Should not be in default\n");	
 		}
 	}
-//	printf("k: %d optind: %d EOF: %d\n", k, optind, EOF);
-
-	FILE* fptr;
-	char letter;
-	char* word;
-	if(optind == argc) 	// No files input open stdin
+   
+	char* word = NULL;
+       	
+       	if(optind == argc) 	// No files input open stdin
 	{
-		while((letter = getchar()) != EOF)
-			putchar(letter);
+		while((word = getWord(stdin)) != NULL) 
+		{
+			printf("%s ", word);	
+			//hashWord;
+			//free(word);
+		}
 	}
 
 	else 			// Open files instead
 	{
-		for(; optind < argc; optind++) // Opens each file given after option -n
-		{
+		for(; optind < argc; optind++) { // Opens each file given after option -n 
+			*word = 'a';
+			FILE* fptr = NULL;
 			if((fptr = fopen(argv[optind], "r")) == NULL)
+				
 			{
 				printf(stderr, "Can't open file\n");
 				return 1;
 			}
-			while((letter = fgetc(fptr)) != EOF)
+			while(word != NULL) // When EOF reached set word = NULL 
 			{
-				putchar(letter);	
-			}
+				word = getWord(fptr); // word = NULL after each file forcing new file to immediately return without getting words
+				if(word != NULL)
+				{
+					printf("%s ", word);			
+				}	
+				//hashInsert(word);
+				//free(word); //where does word point to after being freed is it NULL ?	
+			} 
 			fclose(fptr);
 		}
 	}
+	
 	return 0;
 }
 /* getWord takes a file pointer and parses the next alphabetical word returning it as a Null byte terminated string */
-//char* getWord(FILE* stream)
-//{
-//	
-//}
+char* getWord(FILE* file)
+{
+	int letter = 0; 
+	uint8_t buffer = 5;
+        char* p_word = 0;	
+	uint8_t len = 0;
+	do 
+	{
+		letter = fgetc(file);
+		if(letter == EOF)
+			return NULL;	// EOF reached before new word
+	} while(!isalpha(letter));
+	
+	p_word = calloc(buffer, sizeof(char)); // Construct string from letters
+
+	do 
+	{
+		++len;
+		if(len == buffer)
+		{
+			buffer += buffer; 
+			p_word = (char*)realloc(p_word, buffer);
+		}	
+		
+		p_word[len-1] = letter;
+		letter = fgetc(file);
+		if(letter == EOF)
+			break;
+	} while(isalpha(letter)); 	// End of word 
+	p_word[len] = '\0';		// Null byte terminator of string	
+	return p_word;
+
+}
+
