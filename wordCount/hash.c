@@ -9,38 +9,51 @@
 
 struct hashTable* reHash(struct hashTable* table)
 {
-        uint16_t newSize = table->size*2;
-        table = (struct hashTable*) realloc(table, sizeof(struct hashTable) + sizeof(struct tup*) * table->size * 2); //need re-hashing?
+        uint16_t newSize = table->size*5;
         struct hashTable* newTable = malloc(sizeof(struct hashTable) + sizeof(struct tup*) * newSize);
         for(int i = 0; i < table->size; i++)
         {
+		char* key = (table->buckets[i])->key;
                 if(table->buckets[i] != NULL)
                 {
-                        //hashFunction
+                	hashInsert(key, newTable);	        // Re-hash all entries of table
                 }
         }
         free(table);
         return newTable;
 }
 
-void hash(char* key, struct hashTable* table)
+void hashInsert(char* key, struct hashTable* table)
 {
         char* ch = key;
-        int ind = 0;
-        while(*ch != '\0')
+        uint16_t ind = 0;
+	(table->size)++;
+	if((table-> size) <= ((table->capacity) >> 1)) 			// Load factor must be < 0.5
+	{
+		table = reHash(table);
+	}
+        while(*ch != '\0') 		// Hash word into int
         {
-        ind = atoi(ch) % table->size;
-                if(table->buckets[ind] == NULL)
-                {
-                        struct tup myTup = {key, 1};
-                        *(table->buckets[ind]) = myTup;
-                }
-                else
-                {
-                        (table->buckets[ind])->count += 1;
-                }
-        }
+        	ind += atoi(ch);
+		ch++;
+	}
+	ind = ind % table->capacity;	// Ensure index < array size
 
-        // double buckets if load factor > 0.5
-        // quadratic probing if collision
+	if(table->buckets[ind] == NULL) // Insert tup into empty bucket
+	{
+		struct tup myTup = {key, 1};
+		*(table->buckets[ind]) = myTup;
+	}
+	else
+	{
+		while(table->buckets[++ind] != NULL)
+		{	
+			if(!(strcmp(key, (table->buckets[ind])->key)))
+			{
+				((table->buckets[ind]) -> count) +=1;  	// Found matching key
+				return;	
+			}	
+		}
+		((table->buckets[ind])->count) += 1; 	// Matching key 
+	}
 }

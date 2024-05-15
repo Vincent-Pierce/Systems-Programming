@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <ctype.h>
-
+#include <string.h>
 /* MACROS **********************************************************************************************************/
 
 /* FUNCTION PROTOTYPES *********************************************************************************************/
@@ -23,7 +23,7 @@ struct hashTable {
 
 struct hashTable* reHash(struct hashTable* table);
 
-void hash(char* key, struct hashTable* table);
+void hashInsert(char* key, struct hashTable* table);
 
 
 #endif
