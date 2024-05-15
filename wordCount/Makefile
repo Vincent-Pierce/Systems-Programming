@@ -14,8 +14,8 @@ MAIN = fw
 
 all : $(MAIN)
 
-$(MAIN) : fw.c fw.h hash.h 
-	$(CC) $(CFLAGS) -o $(MAIN) fw.c 
+$(MAIN) : fw.c hash.c fw.h hash.h 
+	$(CC) $(CFLAGS) -o $(MAIN) fw.c hash.c 
 
 clean :
 	rm *.o $(MAIN) core
