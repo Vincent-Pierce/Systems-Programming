@@ -13,8 +13,9 @@
 #include <unistd.h> 
 #include <stdio.h> 
 #include <ctype.h>
-
+#include "hash.h"
 /* FUNCTION PROTOTYPES ***************************************************************/
 
 char* getWord(FILE* file);
+void printKWords(int k, struct hashTable* myHash);
 #endif
