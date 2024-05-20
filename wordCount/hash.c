@@ -4,65 +4,135 @@
  * FILE INCLUSION **********************************************************************************/
 
 #include "hash.h"
-
+#include <stdbool.h>
 /* LOCAL DEFINITIONS ******************************************************************************/
 
-struct hashTable* reHash(struct hashTable* table)
+struct hashTable* createHash(void)
 {
-        uint16_t newSize = table->size*5;
-        struct hashTable* newTable = malloc(sizeof(struct hashTable) + sizeof(struct tup*) * newSize);
-       	newTable -> capacity = newSize;
-        newTable -> size = table-> size;	
-	for(int i = 0; i < table->size; i++)
-        {
-		char* key = (table->buckets[i])->key;
-                if(table->buckets[i] != NULL)
-                {
-                	hashWord(key, newTable);	        // Re-hash all entries of table
-                }
-        }
-        free(table);
-        return newTable;
+	struct hashTable* newTable = (struct hashTable*) malloc(sizeof(struct hashTable) + sizeof(struct tup*) * HASHSIZ);
+	newTable -> size = 0;
+	newTable -> capacity = HASHSIZ;
+	for(int i = 0; i < HASHSIZ; i++)
+	{
+		newTable->buckets[i] = NULL;
+	}
+	return newTable;
 }
 
-void hashWord(char* key, struct hashTable* table)
+struct hashTable* reHash(struct hashTable* oldTable)
 {
-        char* ch = key;
-        uint16_t ind = 0;
-	(table->size)++;
-	if((table -> size) > ((table->capacity) >> 1)) 			// Load factor must be < 0.5
+    uint16_t newCapacity = oldTable->capacity*5;
+       
+	struct hashTable* newTable = (struct hashTable*) malloc(sizeof(struct hashTable) + sizeof(struct tup*) * newCapacity);
+	newTable -> size = oldTable->size; 
+	newTable -> capacity = newCapacity;
+	for(int i = 0; i < newCapacity; i++)
+	{	
+		newTable->buckets[i] = NULL;
+	}
+       	
+	for(int i = 0; i < oldTable->size; i++)
+		{
+		char* key = (oldTable->buckets[i])->key;
+				if(oldTable->buckets[i] != NULL)
+				{
+					hashWord(key, newTable);	        // Re-hash all entries of oldTable
+					free(oldTable->buckets[i]);
+				}
+				else
+				{
+					free(oldTable->buckets[i]);
+				}
+		}
+		free(oldTable);
+		return newTable;
+}
+
+void hashWord(char* key, struct hashTable* myTable)
+{
+    char* ch = key;
+    uint16_t ind = 0;
+	if((myTable -> size) > ((myTable->capacity) >> 1)) 			// Load factor must be < 0.5
 	{
-		table = reHash(table);
+		myTable = reHash(myTable);
 	}
         while(*ch != '\0') 		// Hash word into int
         {
         	ind += tolower(*ch) - '0';
-		ch++;
-	}
-	ind = ind % (table->capacity);	// Ensure index < array size
-
-	if(table->buckets[ind] == NULL) // Insert tup into empty bucket
+			ch++;
+		}
+	ind = ind % (myTable->capacity);	// Ensure index < array size
+if(myTable->buckets[ind] == NULL) // Insert tup into empty bucket
 	{
-		struct tup myTup = {key, 1};
-		table->buckets[ind] = &myTup;
+	struct tup* hashTup = malloc(sizeof(struct tup)); 		// Lost ability to free hashTup after exiting function... memory leaks will occur
+	hashTup->key = key;
+	hashTup->count = 1;
+	myTable->buckets[ind] = hashTup;
+	(myTable->size)++;
 	}
 	else
 	{
-		while(table->buckets[ind] != NULL)
+		while(myTable->buckets[ind] != NULL)  			// Linear probing
 		{	
-			if(!(strcmp(key, (table->buckets[ind])->key)))
+			if(!(strcmp(key, (myTable->buckets[ind])->key)))
 			{
-				((table->buckets[ind]) -> count) +=1;  	// Found matching key
+				((myTable->buckets[ind]) -> count) +=1;  	// Found matching key
 				return;	
 			}
 		++ind;	
 		}
-		((table->buckets[ind])->count) += 1; 	// Matching key 
+		((myTable->buckets[ind])->count) += 1; 	// empty bucket after collision found via linear probing 
 	}
 }
 
+void swapTup(struct tup* a, struct tup* b)  //Swapping NULL & Tup AND Tup & Tup causing sig fault when swap null 
+{
+	struct tup temp;
+	temp = *a;
+	*a = *b;
+	*b = temp;
+}
 
+/* Bubble sort */
 void sortHash(struct hashTable* myHash)
 {
+	uint32_t size = myHash->size;
+	for (int i = 0; i < myHash->capacity; i++) 
+	{
+		if(myHash->buckets[i] == NULL)
+		{
+			int x = i;
+			while(myHash->buckets[x] == NULL)
+			{
+				++x;
+			}
+			myHash->buckets[i] = myHash->buckets[x];
+			myHash->buckets[x] = (struct tup*)NULL; //	swapTup(myHash->buckets[i], myHash->buckets[x]);
+			--size;
+			if(!size)
+			{
+				return;
+			}
+		}	
+	}
+
+	bool swap;
+	
+	for (int i = 0; i < myHash->size; i++) 
+	{
+		swap = false;
+		for (int j=0; j<myHash->size-i-1; j++) 
+		{
+			if(myHash->buckets[j]->count > myHash->buckets[j+1]->count)
+			{
+				swapTup(myHash->buckets[j], myHash->buckets[j+1]);
+				swap = true;
+			}
+		if(swap == false)
+		{
+			return;
+		}
+		}
+	}		
 	return;
 }

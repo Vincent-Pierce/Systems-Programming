@@ -48,18 +48,19 @@ char* getWord(FILE* file)
 
 }
 
-/* printKWords iterates through an array of char* and prints out the first k words */
-void printKWords(int k, struct hashTable* myHash)
+/* printKWords iterates through an array of tup* and prints out the first k words */
+void printKWords(int k, struct hashTable* sortedHash)
 {
-	printf("The top %i words (out of %i) are:\n", k, myHash->size); 
-	if(myHash->size < k)
+	printf("The top %i words (out of %i) are:\n", k, sortedHash->size); 
+	if(sortedHash->size < k)
 	{
-		k = myHash->size;
+		k = sortedHash->size;
 	}	
 	for(int i = 0; i < k; i++)
 	{
-		printf("\t %i %s\n", myHash->buckets[i]->count, myHash->buckets[i]->key);
+		printf("\t %i %s\n", sortedHash->buckets[i]->count, sortedHash->buckets[i]->key);
 	}
+
 }
 
 
@@ -90,13 +91,8 @@ int main(int argc, char* argv[])
 	}
    
 	char* word = NULL;
-        struct hashTable* myTable = malloc(sizeof(struct hashTable) + sizeof(struct tup*) * HASHSIZ); 	/* Maybe create hash.c function that creates new empty hash */	
-        myTable->capacity = HASHSIZ;
-	myTable->size = 0;	
-	for(int i = 0; i < HASHSIZ; i++) // Zeroize all tups in hash to start
-	{
-		myTable->buckets[i]=NULL;
-	}
+	struct hashTable* myTable = createHash();
+	
 	if(optind == argc) 	// No files input open stdin
 	{
 		while((word = getWord(stdin)) != NULL) 
@@ -109,7 +105,7 @@ int main(int argc, char* argv[])
 	else 			// Open files instead
 	{
 		for(; optind < argc; optind++) { // Opens each file given after option -n 
-			*word = 'a';
+			word = NULL;			// word is still a null pointer can't assign value 
 			FILE* fptr = NULL;
 			if((fptr = fopen(argv[optind], "r")) == NULL)
 				
@@ -117,9 +113,8 @@ int main(int argc, char* argv[])
 				printf(stderr, "Can't open file\n");
 				return 1;
 			}
-			while(word != NULL) // When EOF reached set word = NULL 
+			while((word = getWord(fptr)) != NULL) // When EOF reached set word = NULL 
 			{
-				word = getWord(fptr); // word = NULL after each file forcing new file to immediately return without getting words
 				if(word != NULL)
 				{
 					printf("%s ", word);			
