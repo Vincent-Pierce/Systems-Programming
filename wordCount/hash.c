@@ -6,84 +6,98 @@
 #include "hash.h"
 #include <stdbool.h>
 /* LOCAL DEFINITIONS ******************************************************************************/
-
-struct hashTable* createHash(void)
+/* newHash only used a single time when program starts to allocate the hashTable */
+struct hashTable* newHash(void)
 {
-	struct hashTable* newTable = (struct hashTable*) malloc(sizeof(struct hashTable) + sizeof(struct tup*) * HASHSIZ);
-	newTable -> size = 0;
-	newTable -> capacity = HASHSIZ;
-	for(int i = 0; i < HASHSIZ; i++)
-	{
-		newTable->buckets[i] = NULL;
-	}
+	struct hashTable* newTable = malloc(sizeof(struct hashTable));
+	if(!newTable)
+		printf("newTable malloc has failed\n");
+
+	newTable->size = 0;
+	newTable->capacity = HASHSIZ;
+	newTable->bucket = calloc(HASHSIZ, sizeof(struct tup));
+	if(!newTable->bucket)
+		printf("new Hash-table failed");
+	
 	return newTable;
 }
-
-struct hashTable* reHash(struct hashTable* oldTable)
+/* Once hashtable grows so that load factor is > 0.5 dynamically grow array of tups and rehash entries in hashTable */
+void reHash(struct hashTable* myTable)
 {
-    uint16_t newCapacity = oldTable->capacity*5;
-       
-	struct hashTable* newTable = (struct hashTable*) malloc(sizeof(struct hashTable) + sizeof(struct tup*) * newCapacity);
-	newTable -> size = oldTable->size; 
-	newTable -> capacity = newCapacity;
-	for(int i = 0; i < newCapacity; i++)
+	uint32_t newCap = myTable->capacity*5;
+
+	struct tup* newBucket = calloc(newCap, sizeof(struct tup));		// New hash-table requires every buckets key/count initialized	
+	if(!newBucket)
+		printf("new hashTable from reHash has failed");
+	
+
+	uint32_t oldCap = myTable->capacity;
+	struct tup* oldBucket = myTable->bucket;
+	myTable->capacity = newCap;								// Set newCap before rehashing each bucket for correct %
+	myTable->size = 0;										// When rehashing size needs to be reset b/c hashWord will ++
+	myTable->bucket = newBucket;
+	for(int i = 0; i < oldCap; ++i)
 	{	
-		newTable->buckets[i] = NULL;
-	}
-       	
-	for(int i = 0; i < oldTable->size; i++)
+		if(oldBucket[i].key)
 		{
-		char* key = (oldTable->buckets[i])->key;
-				if(oldTable->buckets[i] != NULL)
-				{
-					hashWord(key, newTable);	        // Re-hash all entries of oldTable
-					free(oldTable->buckets[i]);
-				}
-				else
-				{
-					free(oldTable->buckets[i]);
-				}
+			printf("reHash %s\n, ", oldBucket[i].key);
+			hashWord(oldBucket[i].key, myTable);	        // Re-hash all entries of oldTable
+			printf("outhashWord\n");
 		}
-		free(oldTable);
-		return newTable;
+	}
+	
+	
+	printf("OUT REHASH");
+	//free(oldBucket);
+
 }
 
 void hashWord(char* key, struct hashTable* myTable)
 {
-    char* ch = key;
+    char* char_p = key;
     uint16_t ind = 0;
 	if((myTable -> size) > ((myTable->capacity) >> 1)) 			// Load factor must be < 0.5
 	{
-		myTable = reHash(myTable);
+		reHash(myTable);
 	}
-        while(*ch != '\0') 		// Hash word into int
+        while(*char_p != '\0') 		// Hash word into int
         {
-        	ind += tolower(*ch) - '0';
-			ch++;
+        	ind += tolower(*char_p) - '0';
+			++char_p;
 		}
 	ind = ind % (myTable->capacity);	// Ensure index < array size
-if(myTable->buckets[ind] == NULL) // Insert tup into empty bucket
+	if(myTable->bucket[ind].key == NULL) // Insert tup into empty bucket
 	{
-	struct tup* hashTup = malloc(sizeof(struct tup)); 		// Lost ability to free hashTup after exiting function... memory leaks will occur
-	hashTup->key = key;
-	hashTup->count = 1;
-	myTable->buckets[ind] = hashTup;
-	(myTable->size)++;
+		myTable->bucket[ind].key = key;
+		myTable->bucket[ind].count++;
+		myTable->size++;
 	}
 	else
 	{
-		while(myTable->buckets[ind] != NULL)  			// Linear probing
-		{	
-			if(!(strcmp(key, (myTable->buckets[ind])->key)))
+		while(1)   			// Collision handling by linear probing
+		{
+			if(myTable->bucket[ind].key == NULL)
 			{
-				((myTable->buckets[ind]) -> count) +=1;  	// Found matching key
+				myTable->bucket[ind].key=key;				// empty bucket after collision found via linear probing
+				myTable->bucket[ind].count++;	
+				myTable->size++;
+				return;
+			}
+			
+//			printf("\nhashWord %s:%s\n", key, myTable->bucket[ind].key);
+			if(!(strcmp(key, (myTable->bucket[ind]).key)))
+			{
+				((myTable->bucket[ind]).count)++;  	// Found matching key
 				return;	
 			}
-		++ind;	
+			
+			++ind;
+			if(ind == myTable->capacity)
+				ind = 0;
 		}
-		((myTable->buckets[ind])->count) += 1; 	// empty bucket after collision found via linear probing 
 	}
 }
+
 
 void swapTup(struct tup* a, struct tup* b)  //Swapping NULL & Tup AND Tup & Tup causing sig fault when swap null 
 {
@@ -99,15 +113,17 @@ void sortHash(struct hashTable* myHash)
 	uint32_t size = myHash->size;
 	for (int i = 0; i < myHash->capacity; i++) 
 	{
-		if(myHash->buckets[i] == NULL)
+		if(myHash->bucket[i].key == NULL)
 		{
 			int x = i;
-			while(myHash->buckets[x] == NULL)
+			while(myHash->bucket[x].key == NULL)
 			{
 				++x;
 			}
-			myHash->buckets[i] = myHash->buckets[x];
-			myHash->buckets[x] = (struct tup*)NULL; //	swapTup(myHash->buckets[i], myHash->buckets[x]);
+			myHash->bucket[i].key = myHash->bucket[x].key;
+			myHash->bucket[i].count = myHash->bucket[x].count;
+			myHash->bucket[x].key = NULL;
+			myHash->bucket[x].count = 0;
 			--size;
 			if(!size)
 			{
@@ -123,9 +139,9 @@ void sortHash(struct hashTable* myHash)
 		swap = false;
 		for (int j=0; j<myHash->size-i-1; j++) 
 		{
-			if(myHash->buckets[j]->count > myHash->buckets[j+1]->count)
+			if(myHash->bucket[j].count > myHash->bucket[j+1].count)
 			{
-				swapTup(myHash->buckets[j], myHash->buckets[j+1]);
+				swapTup(&(myHash->bucket[j]), &(myHash->bucket[j+1]));
 				swap = true;
 			}
 		if(swap == false)

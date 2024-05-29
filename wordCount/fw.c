@@ -13,6 +13,66 @@
 #include "hash.h"
 /* LOCAL DEFINITIONS *******************************************************************************************/
 
+int main(int argc, char* argv[])
+{
+	int k = 10;
+	int c;
+	extern char *optarg; //optarg points to the string following option character in elements of argv 
+	extern int optind; //index of argv after option arguments parsed
+	while((c = getopt(argc, argv, "n:")) != -1)
+	{
+		switch(c)
+		{
+			case 'n':
+				k = *optarg-'0';
+				break;
+			case '?':
+				printf(" Usage: %s [-o arg]\n", argv[0]);
+				return -1;	// End program
+			case ':':
+				printf(" Usage: %s [-o arg]\n", argv[0]);
+				return -1;
+			default:
+				printf("Should not be in default\n");	
+		}
+	}
+   
+	char* word = NULL;
+	struct hashTable* myTable = newHash();		// Initially empty hashTable
+	
+	if(optind == argc) 	// No files input open stdin
+	{
+		while((word = getWord(stdin)) != NULL) 
+		{
+			hashWord(word, myTable);
+			//free(word);
+		}
+	}
+
+	else 			// Open files instead
+	{
+		for(; optind < argc; optind++) { // Opens each file given after option -n 
+			word = NULL;			// word is still a null pointer can't assign value 
+			FILE* fptr = NULL;
+			if((fptr = fopen(argv[optind], "r")) == NULL)
+				
+			{
+				printf(stderr, "Can't open file\n");
+				return 1;
+			}
+			while((word = getWord(fptr)) != NULL) // When EOF reached set word = NULL 
+			{
+				hashWord(word, myTable);
+				//free(word); //where does word point to after being freed is it NULL ?	
+			} 
+			fclose(fptr);
+		}
+	}
+	sortHash(myTable);
+	printKWords(k, myTable);	
+	free(myTable->bucket);
+	return 0;
+}
 /* getWord takes a file pointer and parses the next alphabetical word returning it as a Null byte terminated string */
 char* getWord(FILE* file)
 {
@@ -51,81 +111,17 @@ char* getWord(FILE* file)
 /* printKWords iterates through an array of tup* and prints out the first k words */
 void printKWords(int k, struct hashTable* sortedHash)
 {
-	printf("The top %i words (out of %i) are:\n", k, sortedHash->size); 
 	if(sortedHash->size < k)
 	{
 		k = sortedHash->size;
 	}	
+	printf("The top %i words (out of %i) are:\n", k, sortedHash->size); 
 	for(int i = 0; i < k; i++)
 	{
-		printf("\t %i %s\n", sortedHash->buckets[i]->count, sortedHash->buckets[i]->key);
+		printf("%9d %s\n",sortedHash->bucket[i].count, sortedHash->bucket[i].key);
 	}
 
 }
 
 
 
-
-int main(int argc, char* argv[])
-{
-	int k = 10;
-	int c;
-	extern char *optarg; //optarg points to the string following option character in elements of argv 
-	extern int optind; //index of argv after option arguments parsed
-	while((c = getopt(argc, argv, "n:")) != -1)
-	{
-		switch(c)
-		{
-			case 'n':
-				k = *optarg-'0';
-				break;
-			case '?':
-				printf(" Usage: %s [-o arg]\n", argv[0]);
-				return -1;	// End program
-			case ':':
-				printf(" Usage: %s [-o arg]\n", argv[0]);
-				return -1;
-			default:
-				printf("Should not be in default\n");	
-		}
-	}
-   
-	char* word = NULL;
-	struct hashTable* myTable = createHash();
-	
-	if(optind == argc) 	// No files input open stdin
-	{
-		while((word = getWord(stdin)) != NULL) 
-		{
-			hashWord(word, myTable);
-			//free(word);
-		}
-	}
-
-	else 			// Open files instead
-	{
-		for(; optind < argc; optind++) { // Opens each file given after option -n 
-			word = NULL;			// word is still a null pointer can't assign value 
-			FILE* fptr = NULL;
-			if((fptr = fopen(argv[optind], "r")) == NULL)
-				
-			{
-				printf(stderr, "Can't open file\n");
-				return 1;
-			}
-			while((word = getWord(fptr)) != NULL) // When EOF reached set word = NULL 
-			{
-				if(word != NULL)
-				{
-					printf("%s ", word);			
-				}	
-				hashWord(word, myTable);
-				//free(word); //where does word point to after being freed is it NULL ?	
-			} 
-			fclose(fptr);
-		}
-	}
-	sortHash(myTable);
-	printKWords(k, myTable);	
-	return 0;
-}
