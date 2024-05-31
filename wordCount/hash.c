@@ -1,5 +1,4 @@
-/*
- * 
+/* * 
  *
  * FILE INCLUSION **********************************************************************************/
 
@@ -40,15 +39,12 @@ void reHash(struct hashTable* myTable)
 	{	
 		if(oldBucket[i].key)
 		{
-			printf("reHash %s\n, ", oldBucket[i].key);
 			hashWord(oldBucket[i].key, myTable);	        // Re-hash all entries of oldTable
-			printf("outhashWord\n");
 		}
 	}
 	
 	
-	printf("OUT REHASH");
-	//free(oldBucket);
+	free(oldBucket);
 
 }
 
@@ -84,7 +80,6 @@ void hashWord(char* key, struct hashTable* myTable)
 				return;
 			}
 			
-//			printf("\nhashWord %s:%s\n", key, myTable->bucket[ind].key);
 			if(!(strcmp(key, (myTable->bucket[ind]).key)))
 			{
 				((myTable->bucket[ind]).count)++;  	// Found matching key
@@ -102,16 +97,21 @@ void hashWord(char* key, struct hashTable* myTable)
 void swapTup(struct tup* a, struct tup* b)  //Swapping NULL & Tup AND Tup & Tup causing sig fault when swap null 
 {
 	struct tup temp;
-	temp = *a;
-	*a = *b;
-	*b = temp;
+	temp.key = a->key;
+	temp.count = a->count;
+
+	a->key=b->key;
+	a->count = b->count;
+
+	b->key = temp.key;
+	b->count = temp.count;
 }
 
 /* Bubble sort */
 void sortHash(struct hashTable* myHash)
 {
 	uint32_t size = myHash->size;
-	for (int i = 0; i < myHash->capacity; i++) 
+	for (int i = 0; i < myHash->capacity; i++) 			// Slide all entries in hashtable to first size elements 
 	{
 		if(myHash->bucket[i].key == NULL)
 		{
@@ -127,28 +127,54 @@ void sortHash(struct hashTable* myHash)
 			--size;
 			if(!size)
 			{
-				return;
+				break;	
 			}
 		}	
+	}	
+
+	int i, j, max_idx;
+
+    // One by one move boundary of unsorted subarray
+    for(i = 0; i < myHash->size - 1; ++i)
+	{
+		max_idx = i;
+		for(j = i+1; j < myHash->size; ++j)
+		{
+			if (myHash->bucket[max_idx].count < myHash->bucket[j].count)
+			{
+				max_idx = j;
+			}
+		}
+        // Swap the found minimum element with the first element
+		if(max_idx != i)
+			swapTup(&(myHash->bucket[max_idx]), &(myHash->bucket[i]));
 	}
 
-	bool swap;
-	
-	for (int i = 0; i < myHash->size; i++) 
+	/* Now sort tie-breakers by reverse-alphabetical order */
+	char* str1, *str2;
+	for(i=0; i<myHash->size -1; ++i)
 	{
-		swap = false;
-		for (int j=0; j<myHash->size-i-1; j++) 
+		max_idx = i;
+		str1 = myHash->bucket[i].key;
+		for(j = i+1; j < myHash->size; ++j)
 		{
-			if(myHash->bucket[j].count > myHash->bucket[j+1].count)
+			str2 = myHash->bucket[j].key;
+			if(myHash->bucket[i].count != myHash->bucket[j].count)
+				break;						// If counts don't match go next
+
+			while(*str1 == *str2) 			// First non-matching letter
 			{
-				swapTup(&(myHash->bucket[j]), &(myHash->bucket[j+1]));
-				swap = true;
+				str1++;
+				str2++;
 			}
-		if(swap == false)
-		{
-			return;
+			if(*str1 > *str2)
+			{
+				max_idx = j;
+				str1 = myHash->bucket[j].key;
+			}
 		}
-		}
-	}		
-	return;
+		if(max_idx != i)
+			swapTup(&(myHash->bucket[max_idx]), &(myHash->bucket[i]));
+	}
 }
+
