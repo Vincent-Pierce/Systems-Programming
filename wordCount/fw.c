@@ -45,7 +45,6 @@ int main(int argc, char* argv[])
 		while((word = getWord(stdin)) != NULL) 
 		{
 			hashWord(word, myTable);
-			//free(word);
 		}
 	}
 
@@ -63,14 +62,18 @@ int main(int argc, char* argv[])
 			while((word = getWord(fptr)) != NULL) // When EOF reached set word = NULL 
 			{
 				hashWord(word, myTable);
-				//free(word); //where does word point to after being freed is it NULL ?	
 			} 
 			fclose(fptr);
 		}
 	}
 	sortHash(myTable);
-	printKWords(k, myTable);	
+	printKWords(k, myTable);
+	for(int i = 0; i < myTable->size;i++)
+	{
+		free(myTable->bucket[i].key);
+	}
 	free(myTable->bucket);
+	free(myTable);
 	return 0;
 }
 /* getWord takes a file pointer and parses the next alphabetical word returning it as a Null byte terminated string */
@@ -88,7 +91,6 @@ char* getWord(FILE* file)
 	} while(!isalpha(letter));
 	
 	p_word = calloc(buffer, sizeof(char)); // Construct string from letters
-
 	do 
 	{
 		++len;
@@ -104,6 +106,7 @@ char* getWord(FILE* file)
 			break;
 	} while(isalpha(letter)); 	// End of word 
 	p_word[len] = '\0';		// Null byte terminator of string	
+	printf("Lost memory: %s      ", p_word);
 	return p_word;
 
 }
