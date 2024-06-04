@@ -109,7 +109,7 @@ void swapTup(struct tup* a, struct tup* b)  //Swapping NULL & Tup AND Tup & Tup 
 	b->count = temp.count;
 }
 
-/* Bubble sort */
+
 void sortHash(struct hashTable* myHash)
 {
 	uint32_t size = myHash->size;

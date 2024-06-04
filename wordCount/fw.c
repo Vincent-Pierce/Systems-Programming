@@ -106,7 +106,6 @@ char* getWord(FILE* file)
 			break;
 	} while(isalpha(letter)); 	// End of word 
 	p_word[len] = '\0';		// Null byte terminator of string	
-	printf("Lost memory: %s      ", p_word);
 	return p_word;
 
 }
