@@ -1,6 +1,7 @@
 fw is a program that counts and prints the top 10 occuring words form the text files input into it. If no input is given than a standard stream is assumed. The option -n [x] allows the user to determine the number of top occuring words printed. 
+
 Ex) fw -n 1 file.txt -- prints the most occuring word in file.txt
-Ex) fw 				 -- prints the top 10 occuring words in stdin
+Ex) fw               -- prints the top 10 occuring words in stdin
 
 The strategy to accomplish this task was create a string from each space delimited sequence of characters, and insert those strings into a hashtable for counting. Once every word was parsed (EOF reached) the table was sorted by occurence. Words coming later in the alphabet won ties.  
 
