@@ -9,7 +9,7 @@
 #define HDECODE_H
 #include <stdio.h>
 #include <string.h>
-
+#include "linkedList.h"
 
 
 

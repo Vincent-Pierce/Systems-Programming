@@ -4,10 +4,10 @@ MAIN = hencode hdecode
 
 all : $(MAIN)
 
-hencode : linkedList.c hencode.c 
+hencode : linkedList.h hencode.c 
 	$(CC) $(CFLAGS) -o hencode linkedList.h hencode.c
 
-hdecode : linkedList.c hdecode.c
+hdecode : linkedList.h hdecode.c
 	$(CC) $(CFLAGS) -o hdecode linkedList.h hdecode.c
 
 clean :
