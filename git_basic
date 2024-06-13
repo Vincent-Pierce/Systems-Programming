@@ -1,0 +1,9 @@
+git clone <HTTPS-URL> 
+
+
+git remote set-url origin https://<token>@github.com/<user>/repo>
+
+
+<token>: 	Generate one
+User: 		Vincent-Pierce
+repo: 		Systems-Programming
