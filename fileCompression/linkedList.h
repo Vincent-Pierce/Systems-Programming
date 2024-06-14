@@ -4,13 +4,17 @@
 * 
 * A singly linked list implementation using Nodes with a pointer to the head  
 ********************************************************************************/
+/* Library includes */
 
 #ifndef LINKEDLIST_H
 #define LINKEDLIST_H
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#include <stdlib.h>
+#include <stdlib.h> 
+
+/******************************************************************************/
+
 struct node
 {
 	struct node* next;

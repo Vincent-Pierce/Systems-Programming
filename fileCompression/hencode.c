@@ -50,5 +50,5 @@ int main(int argc, char* argv[])
 	}
 
 	struct linkedList* myListPtr = linkedListInit();
-	printf("hellow world\n");	
+	
 }
