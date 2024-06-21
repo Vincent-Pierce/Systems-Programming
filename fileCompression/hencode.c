@@ -8,11 +8,7 @@
  *
  * ***********************************************************************************/
 
-
-
-
-
-#include "hencode.h"
+#include "huffman.h"
 
 int main(int argc, char* argv[])
 {
@@ -26,29 +22,32 @@ int main(int argc, char* argv[])
 
 	if(!(inFile = fopen(argv[1], "r")))
 	{
-		fprintf(stderr, "Failed to open inFile\n");
-		fclose(inFile);	
-		return 1;
+		fprintf(stderr, "Failed to open inFile %s: %s\n", argv[1], strerror(errno));
+		exit(errno);	
 	}
-	if(argc == 2)
+	errno = 0;
+	if(argv[2])
 	{
-		if(!(outFile = fopen(stdout, "w")))
-		{
-			fprintf(stderr, "Failed to open stdin\n");
-			fclose(outFile);
-			return 1;	
-		}	
+		
+		outFile = fopen(argv[2], "w" );
 	}
-	else if(argc == 3)
+	else 
 	{
-		if(!(outFile = fopen(argv[2], "w")))
-		{
-			fprintf(stderr, "Failed to open outFile\n");
-			fclose(outFile);
-			return 1;
-		}
+		outFile = STDOUT_FILENO;	
 	}
+	
+	if(errno)
+	{ 
+		fprintf(stderr, "Fail to open outFile %s: %s\n", argv[2], strerror(errno));
+		exit(errno);
+	}	
+
+	printf("%s: test\n", readWord(inFile));	
+
 
 	struct linkedList* myListPtr = linkedListInit();
 	
+
+
+	fclose(inFile);	
 }
